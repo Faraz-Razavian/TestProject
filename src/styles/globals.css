@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+:root {
+  --background-rgb: 255, 255, 255;
+  --thumbBG: #656565;
+  --primaryColor: #fff;
+  --secondaryColor: #000;
+}
+
+body {
+  @apply bg-white;
+}
+
+@media (min-width: 769px) {
+  body {
+    @apply bg-mainBgColor
+  }
+}
+
+.dir_rtl {
+  direction: rtl;
+}
+
+.dir_ltr {
+  direction: ltr;
+}
+
+.sizeScreen {
+  @apply max-w-screen-sm mx-auto
+}
+
+@screen md {
+  .sizeScreen {
+    @apply max-w-full px-12
+  }
+}
+
+@screen xl {
+  .sizeScreen {
+    @apply mx-auto max-w-screen-xl
+  }
+}
+
+@screen 2xl {
+  .sizeScreen {
+    @apply mx-auto max-w-screen-2xl
+  }
+}
+
+.minHeight {
+  min-height: calc(100vh - 24px);
+}
+
+@screen md {
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--background-rgb));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--thumbBG);
+    border-radius: 6px;
+    border: 3px solid rgb(var(--background-rgb));
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primaryColor);
+  }
+}
+
+.break-word {
+  word-break: break-word;
+}
+
+a:focus {
+  outline: 0;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent
+}
+
+input {
+  outline: none;
+}
+
+input:focus {
+  outline: none;
+}
+
+textarea {
+  outline: none;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+button {
+  outline: none;
+}
+
+button:focus {
+  outline: none;
+}
+
+html {
+  --scrollbarBG: transparent;
+  --thumbBG: #8a8a8a;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
