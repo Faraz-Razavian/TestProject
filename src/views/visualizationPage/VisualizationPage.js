@@ -26,8 +26,8 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const { width, height, rebars, diameter } = rectangleValuesRef.current;
-    const cover = 40; // پوشش 40 میلی‌متری
+    const {width, height, rebars, diameter} = rectangleValuesRef.current;
+    const cover = 40;
     const margin = 20;
 
     const viewBoxWidth = width + margin * 2;
@@ -37,7 +37,6 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
       .attr("viewBox", `0 0 ${viewBoxWidth} ${viewBoxHeight}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // رسم مستطیل اصلی
     svg
       .append("rect")
       .attr("x", margin)
@@ -87,8 +86,8 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const { radius, rebars, diameter } = circleValuesRef.current;
-    const cover = 40; // پوشش 40 میلی‌متری
+    const {radius, rebars, diameter} = circleValuesRef.current;
+    const cover = 40;
     const margin = 20;
 
     const effectiveRadius = radius - cover;
@@ -98,7 +97,6 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
       .attr("viewBox", `0 0 ${viewBoxSize} ${viewBoxSize}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // رسم دایره اصلی
     svg
       .append("circle")
       .attr("cx", viewBoxSize / 2)
