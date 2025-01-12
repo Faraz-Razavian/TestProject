@@ -1,40 +1,43 @@
 import {useEffect, useRef, useState} from "react";
 import * as d3 from "d3";
 import {useRouter} from "next/router";
+import {InputField} from "@/components";
 
 export default function VisualizationPage({defaultRectangle, defaultCircle}) {
-  const [shape, setShape] = useState("Rectangle")
-  const router = useRouter()
+  const [shape, setShape] = useState("Rectangle");
+  const router = useRouter();
 
   const rectangleValuesRef = useRef({
     width: defaultRectangle.width,
     height: defaultRectangle.height,
     rebars: defaultRectangle.rebars.count,
     diameter: defaultRectangle.rebars.diameter,
-  })
+  });
 
   const circleValuesRef = useRef({
     radius: defaultCircle.radius,
     rebars: defaultCircle.rebars.count,
     diameter: defaultCircle.rebars.diameter,
-  })
+  });
 
   const svgRef = useRef(null);
 
   const renderRectangle = () => {
-    const svg = d3.select(svgRef.current)
-    svg.selectAll("*").remove()
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
 
-    const {width, height, rebars, diameter} = rectangleValuesRef.current
+    const { width, height, rebars, diameter } = rectangleValuesRef.current;
+    const cover = 40; // پوشش 40 میلی‌متری
+    const margin = 20;
 
-    const margin = 20
-    const viewBoxWidth = width + margin * 2
-    const viewBoxHeight = height + margin * 2
+    const viewBoxWidth = width + margin * 2;
+    const viewBoxHeight = height + margin * 2;
 
     svg
       .attr("viewBox", `0 0 ${viewBoxWidth} ${viewBoxHeight}`)
-      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("preserveAspectRatio", "xMidYMid meet");
 
+    // رسم مستطیل اصلی
     svg
       .append("rect")
       .attr("x", margin)
@@ -42,28 +45,31 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
       .attr("width", width)
       .attr("height", height)
       .attr("fill", "#ddd")
-      .attr("stroke", "#000")
+      .attr("stroke", "#000");
 
-    const perimeter = 2 * (width + height)
-    const spacing = perimeter / rebars
+    const innerWidth = width - 2 * cover;
+    const innerHeight = height - 2 * cover;
 
-    let currentLength = 0
+    const perimeter = 2 * (innerWidth + innerHeight);
+    const spacing = perimeter / rebars;
+
+    let currentLength = 0;
 
     for (let i = 0; i < rebars; i++) {
-      let x, y
+      let x, y;
 
-      if (currentLength <= width) {
-        x = margin + currentLength
-        y = margin
-      } else if (currentLength <= width + height) {
-        x = margin + width
-        y = margin + (currentLength - width)
-      } else if (currentLength <= 2 * width + height) {
-        x = margin + (width - (currentLength - (width + height)))
-        y = margin + height
+      if (currentLength <= innerWidth) {
+        x = margin + cover + currentLength;
+        y = margin + cover;
+      } else if (currentLength <= innerWidth + innerHeight) {
+        x = margin + cover + innerWidth;
+        y = margin + cover + (currentLength - innerWidth);
+      } else if (currentLength <= 2 * innerWidth + innerHeight) {
+        x = margin + cover + (innerWidth - (currentLength - (innerWidth + innerHeight)));
+        y = margin + cover + innerHeight;
       } else {
-        x = margin
-        y = margin + (height - (currentLength - (2 * width + height)))
+        x = margin + cover;
+        y = margin + cover + (innerHeight - (currentLength - (2 * innerWidth + innerHeight)));
       }
 
       svg
@@ -71,65 +77,97 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
         .attr("cx", x)
         .attr("cy", y)
         .attr("r", diameter / 2)
-        .attr("fill", "red")
+        .attr("fill", "red");
 
-      currentLength += spacing
+      currentLength += spacing;
     }
   };
 
   const renderCircle = () => {
-    const svg = d3.select(svgRef.current)
-    svg.selectAll("*").remove()
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
 
-    const {radius, rebars, diameter} = circleValuesRef.current
+    const { radius, rebars, diameter } = circleValuesRef.current;
+    const cover = 40; // پوشش 40 میلی‌متری
+    const margin = 20;
 
-    const margin = 20
-    const viewBoxSize = 2 * (radius + margin)
+    const effectiveRadius = radius - cover;
+    const viewBoxSize = 2 * (radius + margin);
 
     svg
       .attr("viewBox", `0 0 ${viewBoxSize} ${viewBoxSize}`)
-      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("preserveAspectRatio", "xMidYMid meet");
 
+    // رسم دایره اصلی
     svg
       .append("circle")
       .attr("cx", viewBoxSize / 2)
       .attr("cy", viewBoxSize / 2)
       .attr("r", radius)
       .attr("fill", "#ddd")
-      .attr("stroke", "#000")
+      .attr("stroke", "#000");
 
     for (let i = 0; i < rebars; i++) {
-      const angle = (i * 2 * Math.PI) / rebars
+      const angle = (i * 2 * Math.PI) / rebars;
+
       svg
         .append("circle")
-        .attr("cx", viewBoxSize / 2 + radius * Math.cos(angle))
-        .attr("cy", viewBoxSize / 2 + radius * Math.sin(angle))
+        .attr(
+          "cx",
+          viewBoxSize / 2 + effectiveRadius * Math.cos(angle)
+        )
+        .attr(
+          "cy",
+          viewBoxSize / 2 + effectiveRadius * Math.sin(angle)
+        )
         .attr("r", diameter / 2)
-        .attr("fill", "red")
+        .attr("fill", "red");
     }
-  }
+  };
+
 
   const updateVisualization = () => {
     if (shape === "Rectangle") {
-      renderRectangle()
+      renderRectangle();
     } else {
-      renderCircle()
+      renderCircle();
     }
-  }
+  };
 
   useEffect(() => {
-    updateVisualization()
-  }, [shape])
+    updateVisualization();
+  }, [shape]);
 
   const handleInputChange = (e, key, isRectangle = true) => {
-    const value = +e.target.value
+    const value = +e.target.value;
     if (isRectangle) {
-      rectangleValuesRef.current[key] = value
+      if (key === "rectangleRebars") {
+        rectangleValuesRef.current.rebars = value;
+      } else {
+        rectangleValuesRef.current[key] = value;
+      }
     } else {
-      circleValuesRef.current[key] = value
+      if (key === "circleRebars") {
+        circleValuesRef.current.rebars = value;
+      } else {
+        circleValuesRef.current[key] = value;
+      }
     }
-    updateVisualization()
+    updateVisualization();
   };
+
+  const inputFieldsConfig = shape === "Rectangle"
+    ? [
+      {key: "width", label: "Width (mm):", defaultValue: defaultRectangle.width},
+      {key: "height", label: "Height (mm):", defaultValue: defaultRectangle.height},
+      {key: "rectangleRebars", label: "Rebars:", defaultValue: defaultRectangle.rebars.count},
+      {key: "diameter", label: "Diameter (mm):", defaultValue: defaultRectangle.rebars.diameter},
+    ]
+    : [
+      {key: "radius", label: "Radius (mm):", defaultValue: defaultCircle.radius},
+      {key: "circleRebars", label: "Rebars:", defaultValue: defaultCircle.rebars.count},
+      {key: "diameter", label: "Diameter (mm):", defaultValue: defaultCircle.rebars.diameter},
+    ];
 
   return (
     <div className="min-h-screen flex flex-col items-center">
@@ -140,9 +178,8 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
           <select
             value={shape}
             onChange={(e) => {
-              const selectedShape = e.target.value
-              setShape(selectedShape)
-
+              const selectedShape = e.target.value;
+              setShape(selectedShape);
               if (selectedShape === "Rectangle") {
                 rectangleValuesRef.current = {
                   width: defaultRectangle.width,
@@ -155,9 +192,9 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
                   radius: defaultCircle.radius,
                   rebars: defaultCircle.rebars.count,
                   diameter: defaultCircle.rebars.diameter,
-                }
+                };
               }
-              updateVisualization()
+              updateVisualization();
             }}
             className="ml-2 p-1 border rounded text-black">
             <option value="Rectangle">Rectangle</option>
@@ -165,90 +202,19 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
           </select>
         </label>
       </div>
-      {shape === "Rectangle" ? (
-        <div
-          className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-4 shadow-lg bg-gray-300 p-4 rounded text-black">
-          <div className="flex flex-col">
-            <label className="text-center">Width (mm):</label>
-            <input
-              type="number"
-              key="width"
-              min={1}
-              defaultValue={defaultRectangle.width}
-              onChange={(e) => handleInputChange(e, "width")}
-              className="p-1 border rounded w-full"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-center">Height (mm):</label>
-            <input
-              type="number"
-              key="height"
-              min={1}
-              defaultValue={defaultRectangle.height}
-              onChange={(e) => handleInputChange(e, "height")}
-              className="p-1 border rounded w-full"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-center">Rebars:</label>
-            <input
-              type="number"
-              key="rebars"
-              min={1}
-              defaultValue={defaultRectangle.rebars.count}
-              onChange={(e) => handleInputChange(e, "rebars")}
-              className="p-1 border rounded w-full"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-center">Diameter (mm):</label>
-            <input
-              type="number"
-              key="diameter"
-              min={1}
-              defaultValue={defaultRectangle.rebars.diameter}
-              onChange={(e) => handleInputChange(e, "diameter")}
-              className="p-1 border rounded w-full"/>
-          </div>
-        </div>
-      ) : (
-        <div
-          className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 shadow-lg bg-gray-300 p-4 rounded text-black">
-          <div className="flex flex-col">
-            <label className="text-center">Radius (mm):</label>
-            <input
-              type="number"
-              key="radius"
-              min={1}
-              defaultValue={defaultCircle.radius}
-              onChange={(e) => handleInputChange(e, "radius", false)}
-              className="p-1 border rounded w-full"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-center">Rebars:</label>
-            <input
-              type="number"
-              key="rebars"
-              min={1}
-              defaultValue={defaultCircle.rebars.count}
-              onChange={(e) => handleInputChange(e, "rebars", false)}
-              className="p-1 border rounded w-full"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-center">Diameter (mm):</label>
-            <input
-              type="number"
-              key="diameter"
-              min={1}
-              defaultValue={defaultCircle.rebars.diameter}
-              onChange={(e) => handleInputChange(e, "diameter", false)}
-              className="p-1 border rounded w-full"/>
-          </div>
-        </div>
-      )}
+      <div
+        className={`grid ${shape === "Rectangle" ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4 shadow-lg bg-gray-300 p-4 rounded text-black`}>
+        {inputFieldsConfig.map(({key, label, defaultValue}) => (
+          <InputField
+            key={key}
+            label={label}
+            defaultValue={defaultValue}
+            onChange={(e) => handleInputChange(e, key, shape === "Rectangle")}/>
+        ))}
+      </div>
       <div
         className="flex justify-center items-center w-full max-w-[800px] md:max-w-[600px] sm:max-w-[400px] h-auto my-10 aspect-square overflow-hidden bg-gray-100 rounded-lg">
-        <svg
-          ref={svgRef}
-          className="w-full h-full"/>
+        <svg ref={svgRef} className="w-full h-full"/>
       </div>
       <button
         onClick={() => router.push("/")}
@@ -256,5 +222,5 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
         Back to Home
       </button>
     </div>
-  )
+  );
 }
