@@ -8,7 +8,6 @@ import SVGRenderer from "@/views/visualizationPage/SVGRenderer";
 
 export default function VisualizationPage({defaultRectangle, defaultCircle}) {
   const [shape, setShape] = useState("Rectangle");
-  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const rectangleValuesRef = useRef({
@@ -16,27 +15,29 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
     height: defaultRectangle.height,
     rebars: defaultRectangle.rebars.count,
     diameter: defaultRectangle.rebars.diameter,
-  })
+  });
 
   const circleValuesRef = useRef({
     radius: defaultCircle.radius,
     rebars: defaultCircle.rebars.count,
     diameter: defaultCircle.rebars.diameter,
-  })
+  });
 
   const svgRef = useRef(null);
 
-  const validateInput = (value, minValue, errorMessage) => {
-    if (value > minValue) {
-      return {isValid: true, error: null};
-    }
-    return {isValid: false, error: errorMessage}
+  const validateInput = (key, value) => {
+    const rules = {
+      width: (v) => v > 80,
+      height: (v) => v > 80,
+      radius: (v) => v > 40,
+      rebars: (v) => v > 0,
+      diameter: (v) => v > 0,
+    };
+    return rules[key]?.(value) || false;
   };
 
   const handleInputChange = (e, key, isRectangle = true) => {
     const value = +e.target.value;
-    const newErrors = {...errors};
-    let isValid = true;
 
     const keyMapping = {
       rectangleRebars: "rebars",
@@ -46,73 +47,35 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
       circleRebars: "rebars",
       circleDiameter: "diameter",
       radius: "radius",
-    }
+    };
 
     const mappedKey = keyMapping[key];
 
-    const validations = {
-      rebars: () =>
-        validateInput(value, 0, "Rebars must be greater than 0."),
-      diameter: () =>
-        validateInput(value, 0, "Diameter must be greater than 0."),
-      width: () =>
-        validateInput(value, 80, "Width must be greater than 80 mm."),
-      height: () =>
-        validateInput(value, 80, "Height must be greater than 80 mm."),
-      radius: () =>
-        validateInput(value, 40, "Radius must be greater than 40 mm."),
-    }
+    if (!validateInput(mappedKey, value)) return;
 
-    const {isValid: valid, error} = validations[mappedKey]();
-
-    if (valid) {
-      if (isRectangle) {
-        rectangleValuesRef.current[mappedKey] = value;
-      } else {
-        circleValuesRef.current[mappedKey] = value;
-      }
-      delete newErrors[key];
+    if (isRectangle) {
+      rectangleValuesRef.current[mappedKey] = value;
     } else {
-      newErrors[key] = error;
-      isValid = false;
+      circleValuesRef.current[mappedKey] = value;
     }
 
-    setErrors(newErrors);
-
-    if (isValid) {
-      updateVisualization();
-    }
-  }
+    updateVisualization();
+  };
 
   const updateVisualization = () => {
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
     if (shape === "Rectangle") {
-      renderRectangle();
+      const {width, height, rebars, diameter} = rectangleValuesRef.current;
+      renderSVGRectangle(svg, {width, height, rebars, diameter});
     } else {
-      renderCircle();
+      const {radius, rebars, diameter} = circleValuesRef.current;
+      renderSVGCircle(svg, {radius, rebars, diameter});
     }
-  };
-
-  const renderRectangle = () => {
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
-    const {width, height, rebars, diameter} = rectangleValuesRef.current;
-
-    renderSVGRectangle(svg, {width, height, rebars, diameter});
-  };
-
-  const renderCircle = () => {
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
-    const {radius, rebars, diameter} = circleValuesRef.current;
-
-    renderSVGCircle(svg, {radius, rebars, diameter});
   };
 
   useEffect(() => {
-    if (Object.keys(errors)?.length) setErrors({});
-
     if (shape === "Rectangle") {
       rectangleValuesRef.current = {
         width: defaultRectangle.width,
@@ -131,17 +94,18 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
     updateVisualization();
   }, [shape]);
 
+  console.log("Render")
+
   return (
     <div className="min-h-screen flex flex-col items-center">
-      <h1 className="md:text-2xl sm:text-xl text-lg font-bold my-4">2D Visualization Tool</h1>
+      <h1 className="md:text-2xl sm:text-xl text-lg font-bold my-4">
+        2D Visualization Tool
+      </h1>
       <ShapeSelector shape={shape} setShape={setShape}/>
       <InputFields
         shape={shape}
         defaultRectangle={defaultRectangle}
         defaultCircle={defaultCircle}
-        rectangleValuesRef={rectangleValuesRef}
-        circleValuesRef={circleValuesRef}
-        errors={errors}
         handleInputChange={handleInputChange}/>
       <SVGRenderer svgRef={svgRef}/>
       <button
@@ -150,5 +114,5 @@ export default function VisualizationPage({defaultRectangle, defaultCircle}) {
         Back to Home
       </button>
     </div>
-  )
+  );
 }
